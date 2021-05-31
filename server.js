@@ -2,11 +2,15 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const { toUnicode } = require("punycode");
-// const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-// const ProductsSchema = 
+const ProductsSchema = new mongoose.Schema(
+  {
+    title: String,
+  }
+);
 
-// const Product = mongoose.model('Product', ProductsSchema)
+const Product = mongoose.model('Product', ProductsSchema)
 
 //midelware: for bodey read
 app.use(express.json())
@@ -19,8 +23,9 @@ app.get("/", (req, res) => {
 //all products routingwith query :
 app.get("/products", (req, res) => {
   const { title } = req.query;
-  fs.readFile("products.json", "utf8", (err, products) => { //למחוק לעשות טודו נקודה פינד סוגריים ומסולסלות והכל נקודהאקזק סוגריים נקודה ת'אן 
-    const productsArr = JSON.parse(products); // לא צריך
+  // fs.readFile("products.json", "utf8", (err, products) => { //למחוק לעשות טודו נקודה פינד סוגריים ומסולסלות והכל נקודהאקזק סוגריים נקודה ת'אן 
+    // const productsArr = JSON.parse(products); // לא צריך
+    Product.find({}).exec().then((productsArr) => {
     if (title ) {
       const productsFiltered = productsArr.filter(
         (product) => product.title.includes(title));
@@ -29,7 +34,7 @@ app.get("/products", (req, res) => {
       // console.log(productsFiltered);
 
     } else {
-      res.send(products);
+      res.send(productsArr);
     }
     });
   });
@@ -118,5 +123,10 @@ app.delete("/products/:id", (req, res) => {
 
 })
 
+ mongoose.connect('mongodb://localhost/my_database', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useFindAndModify: false,
+  useCreateIndex: true
+}).then(() => {app.listen(8080) }  );
 
-app.listen(8080);
