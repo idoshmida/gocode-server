@@ -2,6 +2,11 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const { toUnicode } = require("punycode");
+// const mongoose = require('mongoose');
+
+// const ProductsSchema = 
+
+// const Product = mongoose.model('Product', ProductsSchema)
 
 //midelware: for bodey read
 app.use(express.json())
@@ -14,12 +19,12 @@ app.get("/", (req, res) => {
 //all products routingwith query :
 app.get("/products", (req, res) => {
   const { title } = req.query;
-  fs.readFile("products.json", "utf8", (err, products) => {
-    const productsArr = JSON.parse(products);
+  fs.readFile("products.json", "utf8", (err, products) => { //למחוק לעשות טודו נקודה פינד סוגריים ומסולסלות והכל נקודהאקזק סוגריים נקודה ת'אן 
+    const productsArr = JSON.parse(products); // לא צריך
     if (title ) {
       const productsFiltered = productsArr.filter(
         (product) => product.title.includes(title));
-      res.send(productsFiltered ? "no data found"  :  productsFiltered)
+      res.send(productsFiltered ? productsFiltered  :   "no data found")
 
       // console.log(productsFiltered);
 
@@ -65,26 +70,28 @@ app.post("/products", (req, res) => {
 app.put("/products/:id", (req, res) => {
   fs.readFile("products.json", "utf8", (err, products) => { 
     const productsArr = JSON.parse(products);
-    let { title  , price, image, description , category} = req.body; 
+    const { title  , price, image, description , category} = req.body; 
     const { id } = req.params;
 
     const updatedProductsArr = productsArr.map((product) => {
       if (product.id === +id) { 
 
+
+        // const { title, price, image, description, category} = product
         //keeping the products properties in case of missing field in the PUT from the user:
-        if (!title) {title = product.title} 
-        if (!price) {price = product.price} 
-        if (!image) {image = product.image} 
-        if (!description) {description = product.description} 
-        if (!category) {category = product.category} 
+        // if (!title) {title = product.title} 
+        // if (!price) {price = product.price} 
+        // if (!image) {image = product.image} 
+        // if (!description) {description = product.description} 
+        // if (!category) {category = product.category} 
 
         return {
           ...product,
-          title,
-          price,
-          image,
-          description,
-          category
+          title: title || product.title,
+          price: price || product.price,
+          image: image || product.image,
+          description: description || product.description,
+          category: category || product.category,
         };
       } else {
         return product;
