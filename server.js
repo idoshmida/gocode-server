@@ -1,132 +1,142 @@
 const express = require("express");
 const app = express();
 const fs = require("fs");
-const { toUnicode } = require("punycode");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const ProductsSchema = new mongoose.Schema(
-  {
-    title: String,
-  }
-);
+const ProductsSchema = new mongoose.Schema({
+  title: String, 
+  image:String,
+  description: String, 
+  category:String,
+  price: Number
+});
 
-const Product = mongoose.model('Product', ProductsSchema)
+const Product = mongoose.model("Product", ProductsSchema);
 
 //midelware: for bodey read
-app.use(express.json())
+app.use(express.json());
+
+
+
 
 //home routing:
 app.get("/", (req, res) => {
-    res.send("hello ido");
+  res.send("hello ido");
 });
 
-//all products routingwith query :
+
+
+
+//all products routing with query :
 app.get("/products", (req, res) => {
   const { title } = req.query;
-  // fs.readFile("products.json", "utf8", (err, products) => { //למחוק לעשות טודו נקודה פינד סוגריים ומסולסלות והכל נקודהאקזק סוגריים נקודה ת'אן 
-    // const productsArr = JSON.parse(products); // לא צריך
-    Product.find({}).exec().then((productsArr) => {
-    if (title ) {
-      const productsFiltered = productsArr.filter(
-        (product) => product.title.includes(title));
-      res.send(productsFiltered ? productsFiltered  :   "no data found")
+  Product.find({})
+    .exec()
+    .then((productsArr) => {
+      if (title) {
+        const productsFiltered = productsArr.filter((product) =>
+          product.title.includes(title)
+        );
+        res.send(productsFiltered.length ? productsFiltered : "no data found");
+      } else {
+        res.send(productsArr);
+      }
+     });
+});
 
-      // console.log(productsFiltered);
+
+
+
+
+
+
+//specific product routing
+app.get("/products/:id", (req, res) => {
+  Product.findOne({_id: req.params.id})
+  .exec( (err, foundProduct) => {
+    if (err) {
+      res.send("error ocured");
+      console.log("err");
 
     } else {
-      res.send(productsArr);
+      console.log(foundProduct);
+      res.send(foundProduct)
     }
-    });
+  })
+  
   });
 
-  //specific product routing
-  app.get("/products/:id", (req, res) => {
-    fs.readFile("products.json", "utf8", (err, products) => {
-      const productsArr = JSON.parse(products);
-      const productsFind = productsArr.find((item) => item.id === +req.params.id);
-      if (productsFind) {
-        res.send(productsFind);
-      } else {
-        res.status(404);
-        res.send();
-      }
-    });
-  });
+
+
+
+
+
+
 //post a new product at the end of the products.json file
 app.post("/products", (req, res) => {
-  
-      fs.readFile("products.json", "utf8", (err, products) => { 
-          const productsArr = JSON.parse(products);
-          productsArr.push({
-            "id":productsArr.length +1,
-            "title":req.body.title,
-            "price":req.body.price,
-            "image":req.body.image,
-            "category":req.body.category,
-            "description":req.body.description
-          })
-          fs.writeFile("products.json", JSON.stringify(productsArr), (err)=> {
-            console.log(err); res.send("secsess of post send")
-          } )
-      })
-    })
+  Product.insertMany( [
+    { title: req.body.title,
+      image: req.body.image,
+      description: req.body.description, 
+      category: req.body.category,
+      price: req.body.price }]
+  ).then( (addedProduct) => {res.send(addedProduct)});
+});
+
+
+
+
+
+
 
 // editing a product
 app.put("/products/:id", (req, res) => {
-  fs.readFile("products.json", "utf8", (err, products) => { 
-    const productsArr = JSON.parse(products);
-    const { title  , price, image, description , category} = req.body; 
-    const { id } = req.params;
+    const { title, price, image, description, category } = req.body;
+    // const { id } = req.params;
 
-    const updatedProductsArr = productsArr.map((product) => {
-      if (product.id === +id) { 
+    Product.findOneAndUpdate(
+      {_id: req.params.id},
+      { title: title, description: description,  price: price, category: category, image: image  },
+      (err, data) => {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log(data)
+              }
+      }  
+    ).exec().then( () => res.send("done editing"))
+
+});
 
 
-        // const { title, price, image, description, category} = product
-        //keeping the products properties in case of missing field in the PUT from the user:
-        // if (!title) {title = product.title} 
-        // if (!price) {price = product.price} 
-        // if (!image) {image = product.image} 
-        // if (!description) {description = product.description} 
-        // if (!category) {category = product.category} 
 
-        return {
-          ...product,
-          title: title || product.title,
-          price: price || product.price,
-          image: image || product.image,
-          description: description || product.description,
-          category: category || product.category,
-        };
-      } else {
-        return product;
-      }
-    })
-    fs.writeFile("products.json", JSON.stringify(updatedProductsArr), (err)=> {
-      console.log(err); res.send("secsess of put send")
-    } )
-})
-})
 
+//delete a product by id
 app.delete("/products/:id", (req, res) => {
-  fs.readFile("products.json", "utf8", (err, products) => { 
-    const productsArr = JSON.parse(products);
-
-    const updatedProductsArr = productsArr.filter((product) => 
-      product.id !== +req.params.id
-    )
-    fs.writeFile("products.json", JSON.stringify(updatedProductsArr), (err)=> {
-      console.log(err); res.send("secsess of delete ")
-    } )
-
+  Product.deleteOne({_id: req.params.id})
+  .exec( (err, deletedProduct) => {
+    if (err) {
+      res.send("error ocured");
+      console.log("err");
+    } else {
+      console.log(deletedProduct);
+      res.send(deletedProduct)
+    }
   })
+});
 
-})
 
- mongoose.connect('mongodb://localhost/my_database', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
-  useCreateIndex: true
-}).then(() => {app.listen(8080) }  );
 
+
+
+
+mongoose
+  .connect("mongodb://localhost/my_database", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true,
+  })
+  .then(() => {
+    app.listen(8080);
+  });
