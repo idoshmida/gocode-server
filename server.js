@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const mongoose = require("mongoose");
+require('dotenv').config()
 
 const ProductsSchema = new mongoose.Schema({
   title: String, 
@@ -15,6 +16,8 @@ const Product = mongoose.model("Product", ProductsSchema);
 
 //midelware: for bodey read
 app.use(express.json());
+app.use(express.static("client/build"))
+
 
 
 
@@ -131,7 +134,7 @@ app.delete("/products/:id", (req, res) => {
 
 
 mongoose
-  .connect("mongodb://localhost/my_database", {
+  .connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_NAME}?retryWrites=true&w=majority`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
