@@ -14,16 +14,16 @@ const ProductsSchema = new mongoose.Schema({
 
 const Product = mongoose.model("Product", ProductsSchema);
 
-//midelware: for bodey read
+//midelware: for bodey read and for client build
 app.use(express.json());
-app.use(express.static("client/build"))
+app.use(express.static("client/build"));
 
 
 
 
 
 //home routing:
-app.get("/", (req, res) => {
+app.get("/api/", (req, res) => {
   res.send("hello ido");
 });
 
@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
 
 
 //all products routing with query :
-app.get("/products", (req, res) => {
+app.get("/api/products", (req, res) => {
   const { title } = req.query;
   Product.find({})
     .exec()
@@ -54,7 +54,7 @@ app.get("/products", (req, res) => {
 
 
 //specific product routing
-app.get("/products/:id", (req, res) => {
+app.get("/api/products/:id", (req, res) => {
   Product.findOne({_id: req.params.id})
   .exec( (err, foundProduct) => {
     if (err) {
@@ -76,7 +76,7 @@ app.get("/products/:id", (req, res) => {
 
 
 //post a new product at the end of the products.json file
-app.post("/products", (req, res) => {
+app.post("/api/products", (req, res) => {
   Product.insertMany( [
     { title: req.body.title,
       image: req.body.image,
@@ -93,7 +93,7 @@ app.post("/products", (req, res) => {
 
 
 // editing a product
-app.put("/products/:id", (req, res) => {
+app.put("/api/products/:id", (req, res) => {
     const { title, price, image, description, category } = req.body;
     // const { id } = req.params;
 
@@ -115,21 +115,23 @@ app.put("/products/:id", (req, res) => {
 
 
 //delete a product by id
-app.delete("/products/:id", (req, res) => {
+app.delete("/api/products/:id", (req, res) => {
   Product.deleteOne({_id: req.params.id})
   .exec( (err, deletedProduct) => {
     if (err) {
       res.send("error ocured");
       console.log("err");
-    } else {
+ } else {
       console.log(deletedProduct);
       res.send(deletedProduct)
     }
   })
+});   
+
+
+app.get("*", (req, res) => {
+res.sendFile(__dirname + "/client/build/index.html")
 });
-
-
-
 
 
 
@@ -141,5 +143,5 @@ mongoose
     useCreateIndex: true,
   })
   .then(() => {
-    app.listen(8080);
+    app.listen(process.env.PORT || 5000);
   });
